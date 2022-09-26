@@ -74,6 +74,11 @@ export function apply(ctx: Context, config: Config) {
       }
 
       const { username, platform, userId, messageId } = session
+      const data = await ctx.database.get('shorturl', { url })
+      if (data.length) {
+        return segment.quote(messageId) + ctx.options.selfUrl + config.path + data[0].id
+      }
+
       logger.info('shorturl', 'add', `${username} (${platform}:${userId})`, url)
       const id = await generate(url)
       return segment.quote(messageId) + ctx.options.selfUrl + config.path + id
