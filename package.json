@@ -1,7 +1,6 @@
 {
   "name": "koishi-plugin-shorturl",
-  "description": "URI shortener",
-  "private": true,
+  "description": "URI shortener plugin for Koishi",
   "version": "1.0.0",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
@@ -9,12 +8,35 @@
     "lib",
     "dist"
   ],
+  "author": "memset0 <memset0@outlook.com>",
   "license": "MIT",
-  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/koishijs/koishi-plugin-shorturl.git"
+  },
+  "bugs": {
+    "url": "https://github.com/koishijs/koishi-plugin-shorturl/issues"
+  },
+  "homepage": "https://github.com/koishijs/koishi-plugin-shorturl",
+  "scripts": {
+    "build": "atsc -b"
+  },
+  "koishi": {
+    "description": {
+      "en": "URI shortener",
+      "zh": "短链接生成器"
+    },
+    "locales": [
+      "zh"
+    ]
+  },
   "keywords": [
     "chatbot",
     "koishi",
-    "plugin"
+    "plugin",
+    "url",
+    "short-url",
+    "shortener"
   ],
   "peerDependencies": {
     "koishi": "^4.9.1"
