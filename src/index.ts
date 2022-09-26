@@ -1,4 +1,4 @@
-import { Context, RuntimeError, Schema, segment, Session } from 'koishi'
+import { Context, RuntimeError, Schema, segment } from 'koishi'
 
 declare module 'koishi' {
   interface Tables {
@@ -40,9 +40,24 @@ export function apply(ctx: Context, config: Config) {
     }
   }
 
-  function userShortcut(session: Session): string {
-    return `${session.username} (${session.platform}:${session.userId})`
-  }
+  ctx.i18n.define('zh', require('./locales/zh'))
+
+  ctx.router.all(config.path + '/:id', async (koa) => {
+    const { id } = koa.params
+    if (id.length === KEY_LENGTH) {
+      const data = await ctx.database.get('shorturl', id)
+      if (data.length) {
+        koa.redirect(data[0].url)
+      } else {
+        koa.status = 404
+      }
+    } else {
+      koa.status = 404
+    }
+    if (koa.status === 404) {
+      koa.body = 'The shorturl you requested is not found on this server.'
+    }
+  })
 
   const logger = ctx.logger('shorturl')
 
@@ -52,14 +67,15 @@ export function apply(ctx: Context, config: Config) {
     count: 'unsigned',
   })
 
-  ctx.command('shorturl <url:string>', '短网址生成器')
+  ctx.command('shorturl <url:string>')
     .action(async ({ session }, url) => {
       if (!url || url.length > 1000) {
         return session.execute('help shorturl')
       }
 
-      logger.info('shorturl', 'add', userShortcut(session), url)
+      const { username, platform, userId, messageId } = session
+      logger.info('shorturl', 'add', `${username} (${platform}:${userId})`, url)
       const id = await generate(url)
-      return segment.quote(session.messageId) + ctx.options.selfUrl + config.path + id
+      return segment.quote(messageId) + ctx.options.selfUrl + config.path + id
     })
 }
