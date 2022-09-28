@@ -67,9 +67,9 @@ export function apply(ctx: Context, config: Config) {
     count: 'unsigned',
   })
 
-  ctx.command('shorturl <url:string>')
+  ctx.command('shorturl <url:rawtext>')
     .action(async ({ session }, url) => {
-      if (!url || url.length > 1000) {
+      if (!url) {
         return session.execute('help shorturl')
       }
 
