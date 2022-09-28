@@ -17,11 +17,13 @@ export const KEY_LENGTH = 6
 export const name = 'shorturl'
 
 export interface Config {
-  path: string
+  path?: string
+  selfUrl?: string
 }
 
 export const Config: Schema<Config> = Schema.object({
   path: Schema.string().description('短链接路由。').default('/s'),
+  selfUrl: Schema.string().role('link').description('服务暴露在公网的地址。缺省时将使用全局配置。'),
 })
 
 export function apply(ctx: Context, config: Config) {
@@ -74,13 +76,14 @@ export function apply(ctx: Context, config: Config) {
       }
 
       const { username, platform, userId, messageId } = session
+      const prefix = segment.quote(messageId) + (config.selfUrl || ctx.options.selfUrl) + config.path
       const data = await ctx.database.get('shorturl', { url })
       if (data.length) {
-        return segment.quote(messageId) + ctx.options.selfUrl + config.path + data[0].id
+        return prefix + data[0].id
       }
 
       logger.info('shorturl', 'add', `${username} (${platform}:${userId})`, url)
       const id = await generate(url)
-      return segment.quote(messageId) + ctx.options.selfUrl + config.path + id
+      return prefix + id
     })
 }
