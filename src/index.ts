@@ -76,7 +76,7 @@ export function apply(ctx: Context, config: Config) {
       }
 
       const { username, platform, userId, messageId } = session
-      const prefix = segment.quote(messageId) + (config.selfUrl || ctx.options.selfUrl) + config.path
+      const prefix = segment.quote(messageId) + (config.selfUrl || ctx.root.config.selfUrl) + config.path + '/'
       const data = await ctx.database.get('shorturl', { url })
       if (data.length) {
         return prefix + data[0].id
