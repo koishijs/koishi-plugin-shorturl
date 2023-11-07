@@ -15,6 +15,7 @@ export interface Shorturl {
 export const KEY_LENGTH = 6
 
 export const name = 'shorturl'
+export const inject = ['router']
 
 export interface Config {
   path?: string
@@ -42,7 +43,7 @@ export function apply(ctx: Context, config: Config) {
     }
   }
 
-  ctx.i18n.define('zh', require('./locales/zh'))
+  ctx.i18n.define('zh-CN', require('./locales/zh-CN'))
 
   ctx.router.all(config.path + '/:id', async (koa) => {
     const { id } = koa.params
