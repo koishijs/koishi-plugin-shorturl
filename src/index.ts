@@ -1,16 +1,6 @@
-import { Context, RuntimeError, Schema, segment } from 'koishi'
-
-declare module 'koishi' {
-  interface Tables {
-    shorturl: Shorturl
-  }
-}
-
-export interface Shorturl {
-  id: string
-  url: string
-  count: number
-}
+import { Context, Schema, segment } from 'koishi'
+import * as service from './service'
+export { service }
 
 export const KEY_LENGTH = 6
 
@@ -28,20 +18,7 @@ export const Config: Schema<Config> = Schema.object({
 })
 
 export function apply(ctx: Context, config: Config) {
-  async function generate(url: string) {
-    let id: string
-    while (true) {
-      id = Math.random().toString(36).slice(2, 2 + KEY_LENGTH)
-      try {
-        await ctx.database.create('shorturl', { id, url, count: 0 })
-        return id
-      } catch (error) {
-        if (!RuntimeError.check(error, 'duplicate-entry')) {
-          throw error
-        }
-      }
-    }
-  }
+  ctx.plugin(service.ShorturlService, config)
 
   ctx.i18n.define('zh-CN', require('./locales/zh-CN'))
 
@@ -64,27 +41,19 @@ export function apply(ctx: Context, config: Config) {
 
   const logger = ctx.logger('shorturl')
 
-  ctx.model.extend('shorturl', {
-    id: 'string',
-    url: 'string',
-    count: 'unsigned',
+  ctx.inject(['shorturl'], (ctx) => {
+    ctx.command('shorturl <url:rawtext>')
+      .action(async ({ session }, url) => {
+        if (!url) {
+          return session.execute('help shorturl')
+        }
+
+        const { username, platform, userId, messageId } = session
+        const prefix = segment.quote(messageId) + ctx.shorturl.getUrlPrefix()
+
+        const id = await ctx.shorturl.generate(url)
+        logger.info('shorturl', 'add', `${username} (${platform}:${userId})`, url)
+        return prefix + id
+      })
   })
-
-  ctx.command('shorturl <url:rawtext>')
-    .action(async ({ session }, url) => {
-      if (!url) {
-        return session.execute('help shorturl')
-      }
-
-      const { username, platform, userId, messageId } = session
-      const prefix = segment.quote(messageId) + (config.selfUrl || ctx.root.config.selfUrl) + config.path + '/'
-      const data = await ctx.database.get('shorturl', { url })
-      if (data.length) {
-        return prefix + data[0].id
-      }
-
-      logger.info('shorturl', 'add', `${username} (${platform}:${userId})`, url)
-      const id = await generate(url)
-      return prefix + id
-    })
 }
