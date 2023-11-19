@@ -28,6 +28,12 @@ export function apply(ctx: Context, config: Config) {
           return session.execute('help shorturl')
         }
 
+        try {
+          new URL(source)
+        } catch (error) {
+          return session.text('.invalid-url')
+        }
+
         const url = await ctx.shorturl.generate(source)
         return h.quote(session.messageId) + url
       })

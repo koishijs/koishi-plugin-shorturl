@@ -63,6 +63,7 @@ export class ShorturlService extends Service {
   }
 
   async generate(url: string) {
+    new URL(url)
     const [data] = await this.ctx.database.get('shorturl', { url })
     if (data) {
       return this.prefix + data.id

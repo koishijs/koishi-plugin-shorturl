@@ -1,3 +1,5 @@
 commands:
   shorturl:
     description: 短链接生成器
+    messages:
+      invalid-url: 无效的链接。
