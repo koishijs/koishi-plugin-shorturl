@@ -1,8 +1,7 @@
-import { Context, Schema, segment } from 'koishi'
-import * as service from './service'
-export { service }
+import { Context, h, Schema } from 'koishi'
+import { ShorturlService } from './service'
 
-export const KEY_LENGTH = 6
+export * from './service'
 
 export const name = 'shorturl'
 export const inject = ['router']
@@ -18,42 +17,19 @@ export const Config: Schema<Config> = Schema.object({
 })
 
 export function apply(ctx: Context, config: Config) {
-  ctx.plugin(service.ShorturlService, config)
+  ctx.plugin(ShorturlService, config)
 
   ctx.i18n.define('zh-CN', require('./locales/zh-CN'))
 
-  ctx.router.all(config.path + '/:id', async (koa) => {
-    const { id } = koa.params
-    if (id.length === KEY_LENGTH) {
-      const data = await ctx.database.get('shorturl', id)
-      if (data.length) {
-        koa.redirect(data[0].url)
-      } else {
-        koa.status = 404
-      }
-    } else {
-      koa.status = 404
-    }
-    if (koa.status === 404) {
-      koa.body = 'The shorturl you requested is not found on this server.'
-    }
-  })
-
-  const logger = ctx.logger('shorturl')
-
   ctx.inject(['shorturl'], (ctx) => {
     ctx.command('shorturl <url:rawtext>')
-      .action(async ({ session }, url) => {
-        if (!url) {
+      .action(async ({ session }, source) => {
+        if (!source) {
           return session.execute('help shorturl')
         }
 
-        const { username, platform, userId, messageId } = session
-        const prefix = segment.quote(messageId) + ctx.shorturl.getUrlPrefix()
-
-        const id = await ctx.shorturl.generate(url)
-        logger.info('shorturl', 'add', `${username} (${platform}:${userId})`, url)
-        return prefix + id
+        const url = await ctx.shorturl.generate(source)
+        return h.quote(session.messageId) + url
       })
   })
 }
