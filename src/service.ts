@@ -1,4 +1,5 @@
 import { Context, RuntimeError, Service } from 'koishi'
+import { parse, stringify } from 'querystring'
 import { Config } from '.'
 
 const KEY_LENGTH = 6
@@ -34,12 +35,21 @@ export class ShorturlService extends Service {
       count: 'unsigned',
     })
 
-    ctx.router.all(config.path + '/:id', async (koa) => {
-      const { id } = koa.params
+    ctx.router.all(config.path + '/:path(.+)', async (koa) => {
+      this.logger.debug('[request] %s', koa.url.slice(config.path.length))
+      const { path } = koa.params
+      const [id] = path.split('/', 1)
       if (id.length === KEY_LENGTH) {
-        const data = await ctx.database.get('shorturl', id)
-        if (data.length) {
-          koa.redirect(data[0].url)
+        const [data] = await ctx.database.get('shorturl', id)
+        if (data) {
+          const url = new URL(data.url)
+          const query = stringify({
+            ...parse(url.search.slice(1)),
+            ...koa.query,
+          })
+          url.pathname += path.slice(KEY_LENGTH)
+          url.search = query ? '?' + query : ''
+          koa.redirect(url.href)
         } else {
           koa.status = 404
         }
@@ -62,7 +72,7 @@ export class ShorturlService extends Service {
       id = Math.random().toString(36).slice(2, 2 + KEY_LENGTH)
       try {
         await this.ctx.database.create('shorturl', { id, url, count: 0 })
-        this.logger.info('[create] %s -> %s', id, url)
+        this.logger.debug('[create] %s -> %s', id, url)
         return this.prefix + id
       } catch (error) {
         if (!RuntimeError.check(error, 'duplicate-entry')) {
