@@ -26,6 +26,14 @@
     "build": "atsc -b"
   },
   "koishi": {
+    "service": {
+      "required": [
+        "router"
+      ],
+      "implements": [
+        "shorturl"
+      ]
+    },
     "description": {
       "en": "URI shortener",
       "zh": "短链接生成器"
