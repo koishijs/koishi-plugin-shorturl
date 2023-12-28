@@ -4,7 +4,7 @@ import { ShorturlService } from './service'
 export * from './service'
 
 export const name = 'shorturl'
-export const inject = ['router']
+export const inject = ['server']
 
 export interface Config {
   path?: string

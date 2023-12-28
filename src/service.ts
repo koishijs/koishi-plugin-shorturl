@@ -1,5 +1,6 @@
 import { Context, RuntimeError, Service } from 'koishi'
 import { parse, stringify } from 'querystring'
+import {} from '@koishijs/plugin-server'
 import { Config } from '.'
 
 const KEY_LENGTH = 6
@@ -27,7 +28,7 @@ export class ShorturlService extends Service {
     super(ctx, 'shorturl', true)
 
     const { path, selfUrl } = config
-    this.prefix = (selfUrl || this.ctx.router.config.selfUrl) + path + '/'
+    this.prefix = (selfUrl || this.ctx.server.config.selfUrl) + path + '/'
 
     ctx.model.extend('shorturl', {
       id: 'string',
@@ -35,7 +36,7 @@ export class ShorturlService extends Service {
       count: 'unsigned',
     })
 
-    ctx.router.all(config.path + '/:path(.+)', async (koa) => {
+    ctx.server.all(config.path + '/:path(.+)', async (koa) => {
       this.logger.debug('[request] %s', koa.url.slice(config.path.length))
       const { path } = koa.params
       const [id] = path.split('/', 1)
